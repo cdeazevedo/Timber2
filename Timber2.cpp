@@ -9,12 +9,30 @@ int main()
 {
     VideoMode vm(1920, 1080);
     RenderWindow window(vm, "Timber!!!", Style::Default);
+    Texture textureBackground;
+    textureBackground.loadFromFile("graphics/background.png");
+    Sprite spriteBackground;
+    spriteBackground.setTexture(textureBackground);
+    spriteBackground.setPosition(0, 0);
+
     while (window.isOpen())
     {
         if (Keyboard::isKeyPressed(Keyboard::Escape))
         {
             window.close();
         }
+
+        window.clear(); // clear the display
+
+        // make new things to the display 
+        //  Create a texture to hold a graphic on the GPU Texture textureBackground;
+        // Load a graphic into the texture textureBackground.loadFromFile("graphics/background.png");
+        // Create a sprite Sprite spriteBackground;
+        // Attach the texture to the sprite spriteBackground.setTexture(textureBackground);
+        // Set the spriteBackground to cover the screen spriteBackground.setPosition(0,0);
+        window.draw(spriteBackground);
+        
+        window.display(); //  draw them to the window
     }
     std::cout << "Hello World!\n";
 }
