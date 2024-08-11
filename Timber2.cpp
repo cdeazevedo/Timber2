@@ -4,11 +4,14 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
+#include <sstream>
+#include <vector>
 using namespace sf;
+
 int main()
 {
     // set random seed
-    //srand((int)time(0));
+    srand(static_cast<unsigned>(time(0)));
     int number = (rand() % 100);
     VideoMode vm(1920, 1080);
     RenderWindow window(vm, "Timber!!!", Style::Default);
@@ -29,8 +32,8 @@ int main()
 
     Texture textureBee;
     textureBee.loadFromFile("graphics/bee.png");
-    Sprite beeSprite{ textureBee };
-    beeSprite.setPosition(0, 800);
+    Sprite spriteBee{ textureBee };
+    spriteBee.setPosition(2000, 800);
     bool beeActive = false;
     float beeSpeed{ 0.0f };
 
@@ -40,19 +43,71 @@ int main()
     Sprite spriteCloud2{ textureCloud };
     Sprite spriteCloud3{ textureCloud };
 
-    spriteCloud1.setPosition(0, 0);
-    spriteCloud2.setPosition(0, 250);
-    spriteCloud3.setPosition(0, 500);
+    spriteCloud1.setPosition(2000, 0);
+    spriteCloud2.setPosition(2000, 250);
+    spriteCloud3.setPosition(20000, 500);
 
     bool cloud1Active = false;
     bool cloud2Active = false;
     bool cloud3Active = false;
 
-    float cloud1Speed = 0.0f;
-    float cloud2Speed = 0.0f;
-    float cloud3Speed = 0.0f;
+    float CLOUD_SPEED = 100.0f;
+
+
+    std::vector<Sprite> clouds{ spriteCloud1, spriteCloud2, spriteCloud3 };
+    std::vector<bool> cloudsActive{ cloud1Active, cloud2Active, cloud3Active };
+  
 
     Clock clock;
+
+    RectangleShape timeBar;
+    float timeBarStartWidth = 400;
+    float timeBarHeight = 80;
+    timeBar.setSize(Vector2f(timeBarStartWidth, timeBarHeight));
+    timeBar.setFillColor(Color::Red);
+    timeBar.setPosition((1920 / 2) - timeBarStartWidth / 2, 980);
+    Time gameTimeTotal;
+    float timeRemaining = 6.0f;
+    float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
+
+    
+
+
+    bool paused = true;
+
+    int score = 0;
+    Text messageText;
+    Text scoreText;
+
+    Font font;
+    if (!font.loadFromFile("C:/Development/Timber2/fonts/KOMIKAP_.ttf")) {
+        std::cout << "Font load failed!" << std::endl;
+        return 0;
+    }
+    
+
+    messageText.setFont(font);
+    scoreText.setFont(font);
+
+    messageText.setString("Press ENTER to start!");
+    scoreText.setString("Score: 0");
+
+    messageText.setCharacterSize(75);
+    scoreText.setCharacterSize(100);
+
+    messageText.setFillColor(Color::White);
+    scoreText.setFillColor(Color::White);
+
+    // center the message on the screen
+    FloatRect textRect = messageText.getLocalBounds();
+    messageText.setOrigin(
+        textRect.left + textRect.width / 2.0f,
+        textRect.top + textRect.height / 2.0f
+    );
+
+    messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
+    scoreText.setPosition(20, 20);
+
 
     while (window.isOpen())
     {
@@ -61,49 +116,86 @@ int main()
             window.close();
         }
 
+        if (Keyboard::isKeyPressed(Keyboard::Enter))
+        {
+            paused = false;
+        }
+
         window.clear(); // clear the display
 
         // make new things to the display 
+        if (!paused)
+        {
 
-        Time dt = clock.restart();
+            Time dt = clock.restart();
 
-        // setup the bee
-        if (!beeActive) {
-            srand((int)time(0));
-            beeSpeed = (rand() % 200) + 200;
-            srand((int)time(0));
-            float height = (rand() % 500) + 500;
-            beeSprite.setPosition(2000, height);
-            beeActive = true;
-        }
-        else {
-            beeSprite.setPosition(
-                beeSprite.getPosition().x - beeSpeed * dt.asSeconds(),
-                beeSprite.getPosition().y
-            );
+              // IF game isn't paused, reduce size of timeBar by timeBardWidthPer second * dt.asSeconds?
+            float timeBarWidth = timeBar.getSize().x - dt.asSeconds() * timeBarWidthPerSecond;
+            timeBar.setSize(Vector2f(timeBarWidth, timeBarHeight));
+        
 
-            if (beeSprite.getPosition().x < -100) { beeActive = false; }
+            // setup the bee
+            if (!beeActive) {
+
+                beeSpeed = static_cast<float>((rand() % 200) + 200);
+
+                float height = static_cast<float>((rand() % 500) + 500);
+                spriteBee.setPosition(2000, height);
+                beeActive = true;
+            }
+            else {
+                spriteBee.setPosition(
+                    spriteBee.getPosition().x - beeSpeed * dt.asSeconds(),
+                    spriteBee.getPosition().y
+                );
+
+                if (spriteBee.getPosition().x < -100) { beeActive = false; }
+            }
+            // setup the clouds in an array if you can
+            for (size_t i = 0; i < clouds.size(); i++)
+            {
+                if (!cloudsActive[i]) {
+
+
+
+                    float cloudHeight = static_cast<float>(rand() % 301);
+                    float cloudStart = static_cast<float>((rand() % 2000) + 2000);
+                    clouds[i].setPosition(cloudStart, cloudHeight);
+                    clouds[i].setScale(0.5f + (cloudHeight / 300.0f), 0.5f + (cloudHeight / 300.0f)); // Scaling based on speed
+                    cloudsActive[i] = true;
+
+                }
+                else {
+                    clouds[i].setPosition(
+                        clouds[i].getPosition().x - CLOUD_SPEED * dt.asSeconds(),
+                        clouds[i].getPosition().y
+                    );
+                }
+
+                if (clouds[i].getPosition().x < -500) { cloudsActive[i] = false; }
+
+                std::stringstream ss;
+                ss << "Score: " << score;
+                scoreText.setString(ss.str());
+            }
         }
 
         window.draw(spriteBackground);
-        window.draw(spriteCloud1);
-        window.draw(spriteCloud2);
-        window.draw(spriteCloud3);
+        for (const auto& cloud : clouds) {
+            window.draw(cloud);
+        }
         window.draw(spriteTree);
-        window.draw(beeSprite);
+        window.draw(spriteBee);
+       
+        window.draw(scoreText);
+        if(paused) { window.draw(messageText); }
+        if (!paused) 
+        {
+            window.draw(timeBar); 
+        }
+       
 
         window.display(); //  draw them to the window
     }
     std::cout << "Hello World!\n";
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
