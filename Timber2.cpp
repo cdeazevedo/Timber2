@@ -8,6 +8,13 @@
 #include <vector>
 using namespace sf;
 
+void updateBranches(int seed);
+const int NUM_BRANCHES = 6;
+Sprite branches[NUM_BRANCHES];
+// WHERE IS PLAYER?
+enum class side { LEFT, RIGHT, NONE };
+side branchPositions[NUM_BRANCHES];
+
 int main()
 {
     // set random seed
@@ -70,9 +77,6 @@ int main()
     float timeRemaining = 6.0f;
     float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
 
-    
-
-
     bool paused = true;
 
     int score = 0;
@@ -108,6 +112,14 @@ int main()
     messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
     scoreText.setPosition(20, 20);
 
+    Texture textureBranch;
+    textureBranch.loadFromFile("graphics/branch.png");
+
+    for (int i = 0; i < NUM_BRANCHES; i++) {
+        branches[i].setTexture(textureBranch);
+        branches[i].setPosition(-2000, -2000);
+        branches[i].setOrigin(220, 20);
+    }
 
     while (window.isOpen())
     {
@@ -119,6 +131,9 @@ int main()
         if (Keyboard::isKeyPressed(Keyboard::Enter))
         {
             paused = false;
+            score = 0;
+            timeRemaining = 6;
+            
         }
 
         window.clear(); // clear the display
@@ -128,11 +143,27 @@ int main()
         {
 
             Time dt = clock.restart();
-
+            
               // IF game isn't paused, reduce size of timeBar by timeBardWidthPer second * dt.asSeconds?
-            float timeBarWidth = timeBar.getSize().x - dt.asSeconds() * timeBarWidthPerSecond;
-            timeBar.setSize(Vector2f(timeBarWidth, timeBarHeight));
+            timeRemaining -= dt.asSeconds();
+            timeBar.setSize(
+                Vector2f(
+                    timeBarWidthPerSecond * timeRemaining, timeBarHeight)
+            );
         
+            if (timeRemaining <= 0.0f) {
+                paused = true;
+
+                messageText.setString("Out of time!");
+
+                FloatRect textRect = messageText.getLocalBounds();
+                messageText.setOrigin(
+                    textRect.left + textRect.width / 2.0f,
+                    textRect.top + textRect.height / 2.0f
+                );
+
+                messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
+            }
 
             // setup the bee
             if (!beeActive) {
@@ -177,6 +208,12 @@ int main()
                 std::stringstream ss;
                 ss << "Score: " << score;
                 scoreText.setString(ss.str());
+
+                // update the branch sprites
+                for (int i = 0; i < NUM_BRANCHES; i++)
+                {
+                    //
+                }
             }
         }
 
